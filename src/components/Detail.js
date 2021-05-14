@@ -1,14 +1,41 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import styled from 'styled-components';
+import {useParams} from 'react-router-dom';
+import db from '../firebase';
 
 function Detail() {
+
+
+    const { id } = useParams();
+    // console.log(id);
+
+    const [movie, setmovie] = useState();
+
+    useEffect(()=>{
+        //Grab the movie info db
+        db.collection('movies').doc(id).get().then((doc)=>{
+            if(doc.exists){
+                //save the movie data
+                setmovie(doc.data());
+            } else {
+                //redirect to homepage
+            }
+        })
+    },[]);
+
+
+    console.log("Movie is" , movie);
+
     return (
         <Container>
-            <Background>
-                <img src="https://cdn.vox-cdn.com/thumbor/wJ71E7nJ_4Wj0btm5seEnHNJ4Xk=/0x0:4096x2304/1200x800/filters:focal(1973x1175:2627x1829)/cdn.vox-cdn.com/uploads/chorus_image/image/60190709/BO_RGB_s120_22a_cs_pub.pub16.318.0.jpg" alt="" />
+        {movie && 
+            (
+                <>
+             <Background>
+                <img src={movie.backgroundImg} alt={movie.title} />
             </Background>
             <ImageTitle>
-                <img src="https://prod-ripcut-delivery.disney-plus.net/v1/variant/disney/D7AEE1F05D10FC37C873176AAA26F777FC1B71E7A6563F36C6B1B497CAB1CEC2/scale?width=1440&aspectRatio=1.78" alt="" />
+                <img src={movie.titleImg}  />
             </ImageTitle>
             <Controls>
                 <PlayButton>
@@ -27,11 +54,15 @@ function Detail() {
                 </GroupWatchButton>
             </Controls>
             <SubTitle>
-                7 min . 2018 . Family . G . English                               
+                {movie.subTitle}
             </SubTitle>
             <Description>
-                An ageing Chinese mom gets another chance at motherhood when one of her dumplings springs to life as a lively, giggly dumpling boy.
+                {movie.description}
             </Description>
+        </>
+            )
+        }
+            
         </Container>
     )
 }
@@ -161,7 +192,7 @@ const SubTitle = styled.div`
 const Description = styled.div`
 
     line-height: 1.4;
-    font-size: 20px;
+    font-size: 16px;
     margin-top: 16px;
     color: rgb(249,249,249);
     max-width: 650px;

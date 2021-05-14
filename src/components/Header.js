@@ -1,14 +1,75 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import styled from 'styled-components';
+import {auth, provider} from '../firebase';
+import {useHistory} from "react-router-dom";
+import {
+    selectUserName, 
+    selectUserPhoto,
+    setUserLogin,
+    setSignOut
+} from '../features/user/userSlice';
+import {useSelector, useDispatch} from 'react-redux';
 
 function Header() {
+
+    const dispatch = useDispatch();
+
+    const history = useHistory();
+
+    const userName = useSelector(selectUserName);
+
+    const userPhoto = useSelector(selectUserPhoto);
+
+    useEffect(()=>{
+        auth.onAuthStateChanged(async (user)=>{
+            if(user){
+                dispatch(setUserLogin({
+                name: user.displayName,
+                email: user.email,
+                photo: user.photoURL
+            }))
+            history.push("/");
+            }
+        })
+    },[])
+
+    const SignIn = () => {
+        auth.signInWithPopup(provider)
+        .then((result) => {
+            // console.log(result);
+            dispatch(setUserLogin({
+                name: result.user.displayName,
+                email: result.user.email,
+                photo: result.user.photoURL
+            }))
+            history.push("/");
+        })
+    }
+
+    const SignOut = () => {
+        auth.signOut()
+        .then(()=>{
+            dispatch(setSignOut());
+            history.push("/login");
+        })
+    }
+
     return (
         <Nav>
-            <Logo src="/images/logo.svg" />
-            <NavMenu>
+            <Logo onClick={()=>history.push("/")} src="/images/logo.svg" />
+            { !userName ?
+                (
+                <LoginContainer>
+                    <Login onClick={SignIn} >Login</Login>
+                </LoginContainer>
+                )
+                 :
+                (
+                 <>   
+                <NavMenu>
                 <a>
-                    <img src="/images/home-icon.svg" />
-                    <span>HOME</span>
+                    <img onClick={()=>history.push("/")} src="/images/home-icon.svg" />
+                    <span onClick={()=>history.push("/")} >HOME</span>
                 </a>
                 <a>
                     <img src="/images/search-icon.svg" />
@@ -31,8 +92,11 @@ function Header() {
                     <span>SERIES</span>
                 </a>
             </NavMenu>
-            <UserImg src="https://lh3.googleusercontent.com/ogw/ADGmqu_Ix386BY1KUgNcaeuVe7dqeSn_4affY75xRuqUpA=s83-c-mo" />
-        </Nav>
+            <UserImg onClick={SignOut} src={userPhoto}/>
+                </>
+                )
+            }
+                    </Nav>
     )
 }
 
@@ -106,4 +170,32 @@ const UserImg = styled.img`
     height: 48px;
     border-radius: 50%;
     cursor: pointer;
+`
+
+const LoginContainer = styled.div`
+
+    display: flex;
+    flex: 1;
+    justify-content: flex-end;
+
+`
+
+const Login = styled.div`
+
+    border: 1px solid #f9f9f9;
+    padding: 6px 16px;
+    border-radius: 5px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    background-color: rgba(0,0,0,0.6);
+    transition: all 0.4s ease 0s;
+    cursor: pointer;
+
+    &:hover {
+        background-color: #f9f9f9;
+        color: #000;
+        border-color: transparent;
+
+    }
+
 `
